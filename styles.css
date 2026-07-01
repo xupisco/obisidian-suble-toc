@@ -18,7 +18,7 @@
 }
 
 .subtle-toc-root.is-right {
-	right: 8px;
+	right: 10px;
 }
 
 .subtle-toc-root.is-left {
@@ -47,7 +47,7 @@
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
-	gap: var(--toc-gap, 6px);
+	gap: var(--toc-gap, 8px);
 	padding: 6px 4px;
 	max-height: 60vh;
 	overflow: hidden;
@@ -80,8 +80,9 @@
 	width: 16px;
 	/* square ends + solid color so the 2px hairline antialiases uniformly
 	   instead of reading as ~1px when dimmed */
-	border-radius: 1px;
+	border-radius: 3px;
 	background: var(--text-muted);
+	opacity: 0.2;
 	cursor: pointer;
 	transition: width 120ms ease, background-color 120ms ease, opacity 120ms ease;
 }
@@ -92,7 +93,8 @@
 }
 
 .subtle-toc-dash.is-active {
-	background: var(--interactive-accent);
+	background: #eee;
+	opacity: 0.75;
 	width: 24px;
 }
 
@@ -110,7 +112,7 @@
 .subtle-toc-dash.is-active.subtle-toc-level-4,
 .subtle-toc-dash.is-active.subtle-toc-level-5,
 .subtle-toc-dash.is-active.subtle-toc-level-6 {
-	width: 24px;
+	width: 14px;
 }
 
 /* ---- popover ------------------------------------------------------------- */
@@ -120,7 +122,7 @@
 	display: none;
 	flex-direction: column;
 	width: 264px;
-	max-height: 60vh;
+	max-height: 50vh;
 	background: var(--background-secondary);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 12px;
@@ -152,7 +154,7 @@
 
 .subtle-toc-item {
 	position: relative;
-	padding: 5px 10px 5px 12px;
+	padding: 4px 10px 4px 12px;
 	padding-left: calc(12px + var(--toc-indent, 0) * 12px);
 	border-radius: 6px;
 	color: var(--text-muted);
@@ -179,7 +181,7 @@
 	left: 3px;
 	top: 4px;
 	bottom: 4px;
-	width: 2px;
+	width: 3px;
 	border-radius: 2px;
 	background: var(--interactive-accent);
 }
