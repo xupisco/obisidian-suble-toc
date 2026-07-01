@@ -1,0 +1,10 @@
+{
+	"id": "subtle-toc",
+	"name": "Subtle TOC",
+	"version": "0.1.0",
+	"minAppVersion": "1.4.0",
+	"description": "A floating, Capacities-style table of contents with a minimap on the edge, active-heading tracking, click-to-scroll and document stats.",
+	"author": "xupisco",
+	"authorUrl": "",
+	"isDesktopOnly": true
+}

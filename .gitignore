@@ -1,0 +1,23 @@
+# Intellij
+*.iml
+.idea
+
+# npm / deps
+node_modules/
+package-lock.json
+
+# build output (bundled on release)
+main.js
+*.js.map
+
+# obsidian
+data.json
+
+# editor / os / tools
+.vscode/
+.claude/settings.local.json
+.DS_Store
+Thumbs.db
+
+# optional local test vault
+test-vault/
