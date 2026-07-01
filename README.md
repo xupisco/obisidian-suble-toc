@@ -14,6 +14,12 @@ is highlighted, and clicking any heading jumps to it.
 - **Click to navigate** with optional smooth scroll.
 - Configurable side (left/right), open trigger (hover/click) and heading-level range.
 
+## Screenshots
+
+![Popover outline open](subtle-toc-obsidian_open.png)
+
+![Edge minimap](subtle-toc-obsidian_minimap.png)
+
 ## Install (Community plugins)
 
 1. Open *Settings → Community plugins* in Obsidian.
