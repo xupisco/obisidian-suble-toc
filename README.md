@@ -16,9 +16,7 @@ is highlighted, and clicking any heading jumps to it.
 
 ## Screenshots
 
-![Popover outline open](subtle-toc-obsidian_open.png)
-
-![Edge minimap](subtle-toc-obsidian_minimap.png)
+![Suble TOC](subtle-toc-obsidian.png)
 
 ## Install (Community plugins)
 
