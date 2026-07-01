@@ -14,6 +14,27 @@ is highlighted, and clicking any heading jumps to it.
 - **Click to navigate** with optional smooth scroll.
 - Configurable side (left/right), open trigger (hover/click) and heading-level range.
 
+## Install (Community plugins)
+
+1. Open *Settings → Community plugins* in Obsidian.
+2. Make sure **Restricted mode** is turned off (click **Turn on community plugins** if needed).
+3. Click **Browse**, search for **Subtle TOC**, and open its page.
+4. Click **Install**, then **Enable**.
+
+## Install (BRAT — beta / before it's in the directory)
+
+If the plugin isn't in the official Community plugins directory yet, you can
+install it with [BRAT](https://github.com/TfTHacker/obsidian42-brat):
+
+1. Install **BRAT** from *Settings → Community plugins → Browse* and enable it.
+2. Open the command palette and run **BRAT: Add a beta plugin for testing**.
+3. Paste the repository URL:
+   ```
+   https://github.com/xupisco/obisidian-suble-toc
+   ```
+4. Confirm — BRAT downloads the latest release and keeps it up to date.
+5. Enable **Subtle TOC** in *Settings → Community plugins*.
+
 ## Install (manual / for development)
 
 1. Build the plugin:
