@@ -63,9 +63,11 @@
 	opacity: 1;
 }
 
-/* hide the minimap entirely while the popover is open so it doesn't shift */
+/* fade the minimap out while the popover is open — kept in layout (opacity,
+   not display) so the group keeps its width and the popover stays anchored */
 .subtle-toc-root.is-open .subtle-toc-minimap {
-	display: none;
+	opacity: 0;
+	pointer-events: none;
 }
 
 .subtle-toc-minimap.is-hidden {
@@ -118,8 +120,13 @@
 /* ---- popover ------------------------------------------------------------- */
 
 .subtle-toc-popover {
-	pointer-events: auto;
-	display: none;
+	/* absolutely positioned so it can slide in without reserving layout space
+	   (and shoving the minimap off the edge) while closed */
+	position: absolute;
+	top: 50%;
+	right: 0;
+	pointer-events: none;
+	display: flex;
 	flex-direction: column;
 	width: 264px;
 	max-height: 50vh;
@@ -128,10 +135,30 @@
 	border-radius: 12px;
 	box-shadow: var(--shadow-s, 0 8px 24px rgba(0, 0, 0, 0.35));
 	overflow: hidden;
+	/* closed state: nudged toward the edge and faded out */
+	opacity: 0;
+	transform: translate(10px, -50%);
+	transition: opacity 140ms ease, transform 140ms ease;
+}
+
+/* left-side minimap: anchor to the left edge and slide out rightward */
+.subtle-toc-root.is-left .subtle-toc-popover {
+	right: auto;
+	left: 0;
+	transform: translate(-10px, -50%);
 }
 
 .subtle-toc-root.is-open .subtle-toc-popover {
-	display: flex;
+	pointer-events: auto;
+	opacity: 1;
+	transform: translate(0, -50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.subtle-toc-popover {
+		transition: opacity 140ms ease;
+		transform: translate(0, -50%);
+	}
 }
 
 .subtle-toc-body {

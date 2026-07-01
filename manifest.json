@@ -1,7 +1,7 @@
 {
 	"id": "subtle-toc",
 	"name": "Subtle TOC",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"minAppVersion": "1.4.0",
 	"description": "A floating, Capacities-style table of contents with a minimap on the edge, active-heading tracking, click-to-scroll and document stats.",
 	"author": "Leandro Voltolino",
