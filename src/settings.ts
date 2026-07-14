@@ -1,4 +1,5 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
+import { TocShow } from "./types";
 import type SubtleTocPlugin from "./main";
 
 export class SubtleTocSettingTab extends PluginSettingTab {
@@ -12,6 +13,31 @@ export class SubtleTocSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
+
+		new Setting(containerEl)
+			.setName("Show")
+			.setDesc("Which content to surface: headings, open tasks, or both.")
+			.addDropdown((d) =>
+				d
+					.addOption("both", "Both")
+					.addOption("headings", "Headings")
+					.addOption("tasks", "Tasks")
+					.setValue(this.plugin.settings.show)
+					.onChange(async (v) => {
+						this.plugin.settings.show = v as TocShow;
+						await this.plugin.saveAndRefresh();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Show task checkboxes")
+			.setDesc("Add a checkbox to each task in the popover; clicking it completes the task in the note.")
+			.addToggle((t) =>
+				t.setValue(this.plugin.settings.showTaskCheckboxes).onChange(async (v) => {
+					this.plugin.settings.showTaskCheckboxes = v;
+					await this.plugin.saveAndRefresh();
+				}),
+			);
 
 		new Setting(containerEl)
 			.setName("Show minimap")

@@ -1,9 +1,9 @@
 {
 	"id": "subtle-toc",
 	"name": "Subtle TOC",
-	"version": "0.2.1",
+	"version": "0.3.0",
 	"minAppVersion": "1.4.0",
-	"description": "A floating, Capacities-style table of contents with a minimap on the edge, active-heading tracking, click-to-scroll and document stats.",
+	"description": "A floating, Capacities-style table of contents: an edge minimap for headings with active-heading tracking and click-to-scroll, plus an open-tasks tab with a live count and optional one-click completion.",
 	"author": "Leandro Voltolino",
 	"authorUrl": "https://github.com/xupisco/obisidian-suble-toc",
 	"isDesktopOnly": true

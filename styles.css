@@ -117,6 +117,75 @@
 	width: 14px;
 }
 
+/* ---- edge: dashes minimap stacked over the task badge -------------------- */
+
+.subtle-toc-icon {
+	width: 1em;
+	height: 1em;
+	flex: 0 0 auto;
+}
+
+.subtle-toc-edge {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 6px;
+}
+
+.subtle-toc-root.is-left .subtle-toc-edge {
+	align-items: flex-start;
+}
+
+/* task badge — edge indicator for open tasks, sits below the dashes (or alone
+   when there are no headings) */
+.subtle-toc-task-badge {
+	pointer-events: auto;
+	display: flex;
+	align-items: start;
+	gap: 4px;
+	padding: 3px 4px;
+	margin-right: 3px;
+	border-radius: 5px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	cursor: pointer;
+	opacity: 0.75;
+	transition: color 120ms ease, border-color 120ms ease, opacity 120ms ease;
+}
+
+.subtle-toc-root.is-left .subtle-toc-task-badge {
+	margin-right: 0;
+	margin-left: 3px;
+}
+
+.subtle-toc-task-badge:hover {
+	opacity: 1;
+	color: var(--text-normal);
+	border-color: var(--background-modifier-border-hover, var(--background-modifier-border));
+}
+
+.subtle-toc-task-badge.is-hidden {
+	display: none;
+}
+
+/* fade out while the popover is open, like the minimap */
+.subtle-toc-root.is-open .subtle-toc-task-badge {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.subtle-toc-task-badge .subtle-toc-icon {
+	width: 13px;
+	height: 13px;
+}
+
+.subtle-toc-task-badge-count {
+	font-weight: var(--font-semibold, 600);
+	line-height: 1;
+}
+
 /* ---- popover ------------------------------------------------------------- */
 
 .subtle-toc-popover {
@@ -168,6 +237,70 @@
 	flex-direction: column;
 }
 
+/* ---- tabs (only shown when the note has both headings and tasks) --------- */
+
+.subtle-toc-tabs {
+	display: flex;
+	gap: 4px;
+	padding: 8px 8px 2px;
+}
+
+.subtle-toc-tab.is-hidden {
+	display: none;
+}
+
+.subtle-toc-tab {
+	flex: 1 1 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	padding: 5px 8px;
+	border-radius: 6px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	cursor: pointer;
+	user-select: none;
+	transition: background-color 100ms ease, color 100ms ease;
+}
+
+.subtle-toc-tab:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.subtle-toc-tab.is-active {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+	font-weight: var(--font-semibold, 600);
+}
+
+.subtle-toc-tab-icon {
+	display: inline-flex;
+}
+
+.subtle-toc-tab-icon .subtle-toc-icon {
+	width: 14px;
+	height: 14px;
+}
+
+.subtle-toc-tab-count {
+	min-width: 18px;
+	padding: 1px 6px;
+	border-radius: 999px;
+	background: var(--background-modifier-border);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	font-weight: var(--font-semibold, 600);
+	line-height: 1.4;
+	text-align: center;
+}
+
+.subtle-toc-tab.is-active .subtle-toc-tab-count {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent, #fff);
+}
+
 /* outline list */
 .subtle-toc-list {
 	flex: 1 1 auto;
@@ -177,6 +310,18 @@
 	display: flex;
 	flex-direction: column;
 	gap: 1px;
+}
+
+/* Only the active tab's list is shown (the .is-tab-* class lives on the root).
+   Placed after .subtle-toc-list so the equal-specificity `display: none` wins. */
+.subtle-toc-headings,
+.subtle-toc-tasks {
+	display: none;
+}
+
+.subtle-toc-root.is-tab-headings .subtle-toc-headings,
+.subtle-toc-root.is-tab-tasks .subtle-toc-tasks {
+	display: flex;
 }
 
 .subtle-toc-item {
@@ -222,6 +367,57 @@
 
 .subtle-toc-level-1 > .subtle-toc-item-text {
 	font-weight: var(--font-semibold, 600);
+}
+
+/* ---- task rows (optional checkbox + strike-through on completion) --------- */
+
+.subtle-toc-task-item {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+}
+
+.subtle-toc-task-item .subtle-toc-item-text {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.subtle-toc-task-check {
+	flex: 0 0 auto;
+	width: 15px;
+	height: 15px;
+	border: 1.5px solid var(--text-faint);
+	border-radius: 4px;
+	cursor: pointer;
+	position: relative;
+	transition: border-color 100ms ease, background-color 100ms ease;
+}
+
+.subtle-toc-task-check:hover {
+	border-color: var(--text-muted);
+}
+
+.subtle-toc-task-item.is-done .subtle-toc-task-check {
+	background: var(--interactive-accent);
+	border-color: var(--interactive-accent);
+}
+
+/* checkmark drawn with a rotated border */
+.subtle-toc-task-item.is-done .subtle-toc-task-check::after {
+	content: "";
+	position: absolute;
+	left: 4.5px;
+	top: 1px;
+	width: 3.5px;
+	height: 8px;
+	border: solid var(--text-on-accent, #fff);
+	border-width: 0 2px 2px 0;
+	transform: rotate(45deg);
+}
+
+.subtle-toc-task-item.is-done .subtle-toc-item-text {
+	text-decoration: line-through;
+	color: var(--text-faint);
 }
 
 .subtle-toc-empty-msg {

@@ -1,6 +1,6 @@
 import { MarkdownView } from "obsidian";
 import { EditorView } from "@codemirror/view";
-import { HeadingItem } from "./types";
+import { HeadingItem, NavTarget } from "./types";
 
 /** Pixels below the viewport top a heading must cross to count as "active". */
 const ACTIVE_THRESHOLD = 60;
@@ -46,6 +46,26 @@ function flashPreviewHeading(view: MarkdownView, text: string): void {
 	const attempt = (frame: number) => {
 		const headings = root.querySelectorAll<HTMLElement>("h1, h2, h3, h4, h5, h6");
 		const match = Array.from(headings).find((h) => h.textContent?.trim() === target);
+		if (match) flashElement(match);
+		else if (frame < FLASH_MAX_FRAMES) requestAnimationFrame(() => attempt(frame + 1));
+	};
+	attempt(0);
+}
+
+/** Best-effort flash of a rendered task in Reading mode (matched by its text). */
+function flashPreviewTask(view: MarkdownView, text: string): void {
+	const root = view.contentEl.querySelector<HTMLElement>(".markdown-preview-view");
+	if (!root) return;
+	const target = text.trim();
+	// A task's own text, excluding any nested sub-list items.
+	const ownText = (li: HTMLElement): string => {
+		const clone = li.cloneNode(true) as HTMLElement;
+		clone.querySelectorAll("ul, ol").forEach((n) => n.remove());
+		return clone.textContent?.trim() ?? "";
+	};
+	const attempt = (frame: number) => {
+		const items = root.querySelectorAll<HTMLElement>("li.task-list-item");
+		const match = Array.from(items).find((li) => ownText(li) === target);
 		if (match) flashElement(match);
 		else if (frame < FLASH_MAX_FRAMES) requestAnimationFrame(() => attempt(frame + 1));
 	};
@@ -103,18 +123,20 @@ function animateScrollTop(
 	requestAnimationFrame(step);
 }
 
-/** Scroll the note so the given heading sits near the top of the viewport. */
-export function scrollToHeading(
+/** Scroll the note so the given target line sits near the top of the viewport. */
+export function scrollToTarget(
 	view: MarkdownView,
-	heading: HeadingItem,
+	target: NavTarget,
 	smooth: boolean,
+	kind: "heading" | "task" = "heading",
 ): void {
 	try {
 		if (view.getMode() === "preview") {
 			const mode = getCurrentModeScroll(view);
 			if (mode?.applyScroll) {
-				mode.applyScroll(heading.line);
-				flashPreviewHeading(view, heading.text);
+				mode.applyScroll(target.line);
+				if (kind === "task") flashPreviewTask(view, target.text);
+				else flashPreviewHeading(view, target.text);
 				return;
 			}
 		}
@@ -122,7 +144,7 @@ export function scrollToHeading(
 		const cm = getEditorView(view);
 		if (!cm) return;
 
-		const pos = cm.state.doc.line(heading.line + 1).from;
+		const pos = cm.state.doc.line(target.line + 1).from;
 
 		if (smooth) {
 			// Animate from the *current* scroll position. Placing the cursor is
@@ -142,6 +164,52 @@ export function scrollToHeading(
 		flashEditorLine(cm, pos);
 	} catch (e) {
 		console.error("Subtle TOC: failed to scroll to heading", e);
+	}
+}
+
+/** Leading list marker + open checkbox, capturing everything up to the space. */
+const OPEN_TASK_MARKUP = /^(\s*(?:[-*+]|\d+[.)])\s+\[) (\])/;
+
+/** Column of the space inside `[ ]` on an open-task line, or -1 if not one. */
+function openTaskCheckboxCh(text: unknown): number {
+	if (typeof text !== "string") return -1;
+	const m = OPEN_TASK_MARKUP.exec(text);
+	return m ? m[1].length : -1;
+}
+
+/**
+ * Complete the task on `line` (0-based) by flipping `[ ]` -> `[x]`. In edit/live
+ * preview it goes through the editor (so it's undoable); in reading mode the
+ * editor is a detached buffer whose edits don't persist, so the file is written
+ * directly instead. Returns false if that line isn't an open task.
+ */
+export function completeTask(view: MarkdownView, line: number): boolean {
+	try {
+		if (view.getMode() !== "preview") {
+			const editor = view.editor;
+			if (editor) {
+				const ch = openTaskCheckboxCh(editor.getLine(line));
+				if (ch < 0) return false;
+				editor.replaceRange("x", { line, ch }, { line, ch: ch + 1 });
+				return true;
+			}
+		}
+
+		// Reading mode (or no editor): rewrite the file atomically.
+		const file = view.file;
+		if (!file || openTaskCheckboxCh(view.getViewData().split("\n")[line]) < 0) return false;
+		void view.app.vault
+			.process(file, (data) => {
+				const lines = data.split("\n");
+				const ch = openTaskCheckboxCh(lines[line]);
+				if (ch >= 0) lines[line] = lines[line].slice(0, ch) + "x" + lines[line].slice(ch + 1);
+				return lines.join("\n");
+			})
+			.catch((e) => console.error("Subtle TOC: failed to complete task", e));
+		return true;
+	} catch (e) {
+		console.error("Subtle TOC: failed to complete task", e);
+		return false;
 	}
 }
 
