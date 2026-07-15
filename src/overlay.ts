@@ -3,8 +3,6 @@ import { HeadingItem, TaskItem } from "./types";
 import { completeTask, getActiveHeadingIndex, getScroller, scrollToTarget } from "./dom";
 import type SubtleTocPlugin from "./main";
 
-const CLOSE_DELAY = 160;
-
 type TocTab = "headings" | "tasks";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -93,7 +91,8 @@ export class TocOverlay {
 	 *  stays hidden on the next open even before the metadata cache catches up. */
 	private completedLines = new Set<number>();
 	private activeIndex = -1;
-	private activeTab: TocTab = "headings";
+	/** Starts on the configured default tab, then follows the last-used one. */
+	private activeTab: TocTab;
 	private isOpen = false;
 
 	private scroller: HTMLElement | null = null;
@@ -104,6 +103,7 @@ export class TocOverlay {
 	constructor(plugin: SubtleTocPlugin, view: MarkdownView) {
 		this.plugin = plugin;
 		this.view = view;
+		this.activeTab = plugin.settings.defaultTab;
 	}
 
 	private get settings() {
@@ -158,8 +158,14 @@ export class TocOverlay {
 		const body = this.popoverEl.createDiv({ cls: "subtle-toc-body" });
 
 		this.tabsEl = body.createDiv({ cls: "subtle-toc-tabs" });
-		this.headingsTabEl = this.createTab("headings", "Headings");
-		this.tasksTabEl = this.createTab("tasks", "Tasks");
+		// The default tab leads the tab bar (createTab appends in call order).
+		if (this.settings.defaultTab === "tasks") {
+			this.tasksTabEl = this.createTab("tasks", "Tasks");
+			this.headingsTabEl = this.createTab("headings", "Headings");
+		} else {
+			this.headingsTabEl = this.createTab("headings", "Headings");
+			this.tasksTabEl = this.createTab("tasks", "Tasks");
+		}
 
 		this.listEl = body.createDiv({ cls: "subtle-toc-list subtle-toc-headings" });
 		this.tasksListEl = body.createDiv({ cls: "subtle-toc-list subtle-toc-tasks" });
@@ -222,7 +228,22 @@ export class TocOverlay {
 		}
 
 		this.popoverEl.addEventListener("mouseenter", () => this.cancelClose());
-		this.popoverEl.addEventListener("mouseleave", () => this.scheduleClose());
+		this.popoverEl.addEventListener("mouseleave", (e) => this.onPopoverLeave(e));
+	}
+
+	/** Leaving sideways, back toward the note, reads as "done with it" — close at
+	 *  once. Any other exit keeps the grace period, so the popover still survives
+	 *  the cursor falling outside when a shorter tab shrinks it. */
+	private onPopoverLeave(e: MouseEvent): void {
+		const rect = this.popoverEl.getBoundingClientRect();
+		const towardNote =
+			this.settings.side === "left" ? e.clientX > rect.right : e.clientX < rect.left;
+		if (!towardNote) {
+			this.scheduleClose();
+			return;
+		}
+		this.cancelClose();
+		this.close();
 	}
 
 	private applySide(): void {
@@ -230,11 +251,25 @@ export class TocOverlay {
 		this.rootEl.toggleClass("is-right", this.settings.side === "right");
 	}
 
+	private applyTextWrap(): void {
+		this.rootEl.toggleClass("is-multiline", this.settings.multiLine);
+	}
+
+	/** Publish the custom active-tab color; removed when unset so the CSS falls
+	 *  back to the theme's own value. */
+	private applyColors(): void {
+		const color = this.settings.activeTabBgColor;
+		if (color) this.rootEl.style.setProperty("--toc-active-tab-bg", color);
+		else this.rootEl.style.removeProperty("--toc-active-tab-bg");
+	}
+
 	// ---- data refresh ------------------------------------------------------
 
 	/** Re-read headings from the metadata cache and rebuild everything. */
 	refresh(): void {
 		this.applySide();
+		this.applyColors();
+		this.applyTextWrap();
 		this.applyPixelSnap();
 		this.rebindScroller();
 
@@ -278,13 +313,16 @@ export class TocOverlay {
 
 	/** Recompute the open-task snapshot and rebuild its list + edge badge. */
 	private refreshTasks(cache: CachedMetadata | null): void {
-		const { show, showMinimap } = this.settings;
+		const { show, showMinimap, showTasksInMinimap } = this.settings;
 		this.tasks = show === "headings" ? [] : this.readOpenTasks(cache);
 
 		const hasTasks = this.tasks.length > 0;
 		this.tasksTabEl.toggleClass("is-hidden", !hasTasks);
 		this.tasksCountEl?.setText(String(this.tasks.length));
-		this.taskBadgeEl.toggleClass("is-hidden", !showMinimap || !hasTasks);
+		// With no headings the badge is the only way to open the popover, so the
+		// toggle only suppresses it while the dashes can stand in as the trigger.
+		const suppressed = !showTasksInMinimap && this.headings.length > 0;
+		this.taskBadgeEl.toggleClass("is-hidden", !showMinimap || !hasTasks || suppressed);
 		this.buildTaskBadge();
 		this.buildTaskList();
 	}
@@ -349,7 +387,11 @@ export class TocOverlay {
 				cls: `subtle-toc-item subtle-toc-level-${h.level}`,
 			});
 			item.style.setProperty("--toc-indent", String(h.level - baseLevel));
-			item.createSpan({ cls: "subtle-toc-item-text", text: h.text || "(untitled)" });
+			const text = h.text || "(untitled)";
+			item.createSpan({ cls: "subtle-toc-item-text", text });
+			// Single-line rows cut long text, so the full version lives in a
+			// tooltip; wrapped rows already show all of it.
+			if (!this.settings.multiLine) item.setAttribute("aria-label", text);
 			item.addEventListener("click", () => this.navigate(i));
 			return item;
 		});
@@ -381,7 +423,9 @@ export class TocOverlay {
 					this.completeTaskAt(i, item);
 				});
 			}
-			item.createSpan({ cls: "subtle-toc-item-text", text: t.text || "(empty task)" });
+			const text = t.text || "(empty task)";
+			item.createSpan({ cls: "subtle-toc-item-text", text });
+			if (!this.settings.multiLine) item.setAttribute("aria-label", text);
 			// Keep focus on the editor so a single click navigates (no focus-steal
 			// that would swallow the click on this floating overlay).
 			item.addEventListener("mousedown", (e) => e.preventDefault());
@@ -535,7 +579,7 @@ export class TocOverlay {
 
 	private scheduleClose(): void {
 		this.cancelClose();
-		this.closeTimer = window.setTimeout(() => this.close(), CLOSE_DELAY);
+		this.closeTimer = window.setTimeout(() => this.close(), this.settings.closeDelay);
 	}
 
 	private cancelClose(): void {

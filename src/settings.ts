@@ -1,6 +1,10 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import { TocShow } from "./types";
+import { TocDefaultTab, TocShow } from "./types";
 import type SubtleTocPlugin from "./main";
+
+/** Only where the picker starts while the color is unset — a neutral gray, since
+ *  the theme's own value can be a translucent rgba() the picker can't show. */
+const FALLBACK_ACTIVE_TAB_BG = "#7a7a7a";
 
 export class SubtleTocSettingTab extends PluginSettingTab {
 	plugin: SubtleTocPlugin;
@@ -30,6 +34,22 @@ export class SubtleTocSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Default tab")
+			.setDesc(
+				"Tab shown first in the popover. After that the last-used tab is kept; it always falls back to the tab that has content.",
+			)
+			.addDropdown((d) =>
+				d
+					.addOption("headings", "Headings")
+					.addOption("tasks", "Tasks")
+					.setValue(this.plugin.settings.defaultTab)
+					.onChange(async (v) => {
+						this.plugin.settings.defaultTab = v as TocDefaultTab;
+						await this.plugin.saveAndRefresh();
+					}),
+			);
+
+		new Setting(containerEl)
 			.setName("Show task checkboxes")
 			.setDesc("Add a checkbox to each task in the popover; clicking it completes the task in the note.")
 			.addToggle((t) =>
@@ -40,11 +60,57 @@ export class SubtleTocSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
+			.setName("Show multiple lines")
+			.setDesc(
+				"Wrap long headings and tasks over as many lines as they need. When off, each row is cut to a single line and hovering it shows the full text.",
+			)
+			.addToggle((t) =>
+				t.setValue(this.plugin.settings.multiLine).onChange(async (v) => {
+					this.plugin.settings.multiLine = v;
+					await this.plugin.saveAndRefresh();
+				}),
+			);
+
+		new Setting(containerEl)
+			.setName("Active tab color")
+			.setDesc("Background of the selected tab in the popover. Reset to follow the theme.")
+			.addColorPicker((c) =>
+				c
+					.setValue(this.plugin.settings.activeTabBgColor || FALLBACK_ACTIVE_TAB_BG)
+					.onChange(async (v) => {
+						this.plugin.settings.activeTabBgColor = v;
+						await this.plugin.saveAndRefresh();
+					}),
+			)
+			.addExtraButton((b) =>
+				b
+					.setIcon("rotate-ccw")
+					.setTooltip("Use the theme's color")
+					.onClick(async () => {
+						this.plugin.settings.activeTabBgColor = "";
+						await this.plugin.saveAndRefresh();
+						this.display();
+					}),
+			);
+
+		new Setting(containerEl)
 			.setName("Show minimap")
 			.setDesc("Show the dashed markers along the edge of the note.")
 			.addToggle((t) =>
 				t.setValue(this.plugin.settings.showMinimap).onChange(async (v) => {
 					this.plugin.settings.showMinimap = v;
+					await this.plugin.saveAndRefresh();
+				}),
+			);
+
+		new Setting(containerEl)
+			.setName("Show tasks in minimap")
+			.setDesc(
+				"Show the open-task count on the edge of the note, next to the dashed markers. Notes with tasks but no headings always show it, so the TOC stays reachable.",
+			)
+			.addToggle((t) =>
+				t.setValue(this.plugin.settings.showTasksInMinimap).onChange(async (v) => {
+					this.plugin.settings.showTasksInMinimap = v;
 					await this.plugin.saveAndRefresh();
 				}),
 			);
@@ -74,6 +140,22 @@ export class SubtleTocSettingTab extends PluginSettingTab {
 					.onChange(async (v) => {
 						this.plugin.settings.openTrigger = v as "hover" | "click";
 						await this.plugin.saveAndRefresh();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Close delay")
+			.setDesc(
+				"How long the popover waits before closing after the mouse leaves it, in milliseconds. Raise it if it closes on you while switching tabs.",
+			)
+			.addSlider((s) =>
+				s
+					.setLimits(0, 1000, 20)
+					.setValue(this.plugin.settings.closeDelay)
+					.setDynamicTooltip()
+					.onChange(async (v) => {
+						this.plugin.settings.closeDelay = v;
+						await this.plugin.saveSettings();
 					}),
 			);
 

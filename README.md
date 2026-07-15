@@ -23,8 +23,31 @@ and optional one-click completion — while the minimap stays focused on structu
   straight from the popover; it's marked done in the note (undoable in Editing
   mode), strikes through, and drops out the next time you open the popover.
 - **Show** what you want: headings, tasks, or both.
+- **Multi-line rows** so long headings and tasks are readable in full — or turn
+  them off for single-line rows with the full text in a tooltip.
+- **Tweakable feel**: which tab leads the popover, how long it waits before
+  closing, the color of the selected tab, and whether the edge shows the task
+  badge. Leaving the popover sideways, back toward the note, always closes it at
+  once.
 - Configurable side (left/right), open trigger (hover/click) and heading-level
   range. The heading-level range doesn't apply to tasks.
+
+## Settings
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| Show | Both | Surface headings, tasks, or both. |
+| Default tab | Headings | Tab that leads the tab bar and opens first; after that the last-used tab is kept. |
+| Show task checkboxes | Off | Add a checkbox to each task row to complete it from the popover. |
+| Show multiple lines | On | Wrap long rows; when off, rows are single-line and hovering shows the full text. |
+| Active tab color | *theme* | Background of the selected tab. Reset it to follow the theme. |
+| Show minimap | On | The dashed markers on the edge of the note. |
+| Show tasks in minimap | On | The open-task badge on the edge. Notes with tasks but no headings always show it. |
+| Side | Right | Which edge the TOC docks on. |
+| Open the popover on | Hover | Hover the minimap, or require a click. |
+| Close delay | 160 ms | Grace period before the popover closes once the mouse leaves it. |
+| Smooth scroll | On | Animate the scroll when navigating. |
+| Minimum / maximum heading level | 1 / 6 | Heading levels to include (tasks are unaffected). |
 
 ## Screenshots
 

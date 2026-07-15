@@ -270,7 +270,8 @@
 }
 
 .subtle-toc-tab.is-active {
-	background: var(--background-modifier-hover);
+	/* --toc-active-tab-bg is set from settings; unset = follow the theme */
+	background: var(--toc-active-tab-bg, var(--background-modifier-hover));
 	color: var(--text-normal);
 	font-weight: var(--font-semibold, 600);
 }
@@ -365,6 +366,15 @@
 	text-overflow: ellipsis;
 }
 
+/* "Show multiple lines": wrap the full text instead of cutting it — no tooltip
+   is set on these rows, since nothing is hidden */
+.subtle-toc-root.is-multiline .subtle-toc-item-text {
+	white-space: normal;
+	overflow: visible;
+	text-overflow: clip;
+	overflow-wrap: anywhere;
+}
+
 .subtle-toc-level-1 > .subtle-toc-item-text {
 	font-weight: var(--font-semibold, 600);
 }
@@ -373,7 +383,8 @@
 
 .subtle-toc-task-item {
 	display: flex;
-	align-items: center;
+	/* first-line alignment: task text can wrap to several lines */
+	align-items: flex-start;
 	gap: 7px;
 }
 
@@ -384,6 +395,8 @@
 
 .subtle-toc-task-check {
 	flex: 0 0 auto;
+	/* nudge onto the first text line */
+	margin-top: 1px;
 	width: 15px;
 	height: 15px;
 	border: 1.5px solid var(--text-faint);
