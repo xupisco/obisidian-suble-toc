@@ -134,9 +134,24 @@ export function scrollToTarget(
 		if (view.getMode() === "preview") {
 			const mode = getCurrentModeScroll(view);
 			if (mode?.applyScroll) {
-				mode.applyScroll(target.line);
-				if (kind === "task") flashPreviewTask(view, target.text);
-				else flashPreviewHeading(view, target.text);
+				const flash = () => {
+					if (kind === "task") flashPreviewTask(view, target.text);
+					else flashPreviewHeading(view, target.text);
+				};
+				const scroller = getScroller(view);
+				if (smooth && scroller) {
+					// applyScroll jumps instantly, so use it only to discover the
+					// destination: snap there, read it, restore the original
+					// position, then animate the preview's own scrollTop to it.
+					const from = scroller.scrollTop;
+					mode.applyScroll(target.line);
+					const to = scroller.scrollTop;
+					scroller.scrollTop = from;
+					animateScrollTop(scroller, to, 280, flash);
+				} else {
+					mode.applyScroll(target.line);
+					flash();
+				}
 				return;
 			}
 		}
