@@ -1,6 +1,6 @@
 {
 	"name": "subtle-toc",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"description": "A floating, Capacities-style table of contents for Obsidian.",
 	"main": "main.js",
 	"scripts": {
