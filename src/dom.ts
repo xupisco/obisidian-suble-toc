@@ -123,6 +123,39 @@ function animateScrollTop(
 	requestAnimationFrame(step);
 }
 
+/**
+ * Smoothly scroll a CodeMirror editor so the line at `pos` sits near the top.
+ * Unlike animateScrollTop, the destination is recomputed on every frame: for a
+ * far line that CodeMirror hasn't rendered yet, lineBlockAt().top is only an
+ * estimate, and it converges to the real value as the intervening lines scroll
+ * into view and get measured. Easing toward a single precomputed target would
+ * therefore land in the wrong place — the heading ends up mid/bottom screen
+ * instead of at the top. The final frame snaps to the now-accurate position.
+ */
+function animateScrollToLine(
+	cm: EditorView,
+	pos: number,
+	duration: number,
+	onDone?: () => void,
+): void {
+	const el = cm.scrollDOM;
+	const start = el.scrollTop;
+	const targetTop = () => Math.max(0, cm.lineBlockAt(pos).top - SCROLL_MARGIN);
+	const startTime = performance.now();
+	const step = (now: number) => {
+		const t = Math.min(1, (now - startTime) / duration);
+		// easeInOutCubic
+		const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+		el.scrollTop = start + (targetTop() - start) * eased;
+		if (t < 1) requestAnimationFrame(step);
+		else {
+			el.scrollTop = targetTop();
+			onDone?.();
+		}
+	};
+	requestAnimationFrame(step);
+}
+
 /** Scroll the note so the given target line sits near the top of the viewport. */
 export function scrollToTarget(
 	view: MarkdownView,
@@ -162,11 +195,12 @@ export function scrollToTarget(
 		const pos = cm.state.doc.line(target.line + 1).from;
 
 		if (smooth) {
-			// Animate from the *current* scroll position. Placing the cursor is
-			// deferred to the end, because Obsidian scrolls the selection into
-			// view instantly — doing it up front would jump past the animation.
-			const target = Math.max(0, cm.lineBlockAt(pos).top - SCROLL_MARGIN);
-			animateScrollTop(cm.scrollDOM, target, 280, () => {
+			// Placing the cursor is deferred to the end: Obsidian scrolls the
+			// selection into view instantly, so doing it up front would jump past
+			// the animation. The destination is recomputed each frame (see
+			// animateScrollToLine) because for a far, unrendered line the geometry
+			// starts as an estimate and only firms up as it scrolls into view.
+			animateScrollToLine(cm, pos, 280, () => {
 				cm.dispatch({ selection: { anchor: pos } });
 			});
 		} else {

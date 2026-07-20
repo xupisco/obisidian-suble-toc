@@ -99,6 +99,10 @@ export class TocOverlay {
 	private closeTimer: number | null = null;
 	private rafPending = false;
 	private readonly onScroll = () => this.scheduleActiveUpdate();
+	/** True during a click-driven scroll animation; suppresses the popover list's
+	 *  active-item auto-scroll so it doesn't slide under the cursor. */
+	private navigating = false;
+	private navTimer: number | null = null;
 
 	constructor(plugin: SubtleTocPlugin, view: MarkdownView) {
 		this.plugin = plugin;
@@ -148,6 +152,7 @@ export class TocOverlay {
 	unmount(): void {
 		this.detachScroller();
 		if (this.closeTimer !== null) window.clearTimeout(this.closeTimer);
+		if (this.navTimer !== null) window.clearTimeout(this.navTimer);
 		this.rootEl?.remove();
 		this.view.contentEl.removeClass("subtle-toc-host");
 	}
@@ -503,7 +508,10 @@ export class TocOverlay {
 			const item = this.itemEls[next];
 			if (item) {
 				item.addClass("is-active");
-				if (this.isOpen) {
+				// Skip while a click is navigating: the active heading sweeps past
+				// the intermediate ones as the note scrolls, and auto-scrolling the
+				// list to each would slide it under the cursor.
+				if (this.isOpen && !this.navigating) {
 					item.scrollIntoView({ block: "nearest" });
 				}
 			}
@@ -512,9 +520,23 @@ export class TocOverlay {
 
 	// ---- interactions ------------------------------------------------------
 
+	/** Mark a click-driven scroll in progress so the popover list stays put while
+	 *  the active heading sweeps through the ones between here and the target;
+	 *  otherwise its auto-scroll (see setActive) slides it under the cursor. The
+	 *  window covers the scroll animation plus its trailing scroll events. */
+	private beginNavigation(): void {
+		this.navigating = true;
+		if (this.navTimer !== null) window.clearTimeout(this.navTimer);
+		this.navTimer = window.setTimeout(() => {
+			this.navigating = false;
+			this.navTimer = null;
+		}, 400);
+	}
+
 	private navigate(index: number): void {
 		const heading = this.headings[index];
 		if (!heading) return;
+		this.beginNavigation();
 		scrollToTarget(this.view, heading, this.settings.smoothScroll);
 		// optimistic highlight; the scroll listener will confirm/correct
 		this.setActive(index);
@@ -523,6 +545,7 @@ export class TocOverlay {
 	private navigateTask(index: number): void {
 		const task = this.tasks[index];
 		if (!task) return;
+		this.beginNavigation();
 		// Same scroll/flow as headings (incl. is-flashing); no active highlight.
 		scrollToTarget(this.view, task, this.settings.smoothScroll, "task");
 	}
